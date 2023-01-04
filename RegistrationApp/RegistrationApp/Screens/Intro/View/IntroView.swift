@@ -28,7 +28,7 @@ struct IntroView: View {
 
                     VStack(spacing: 16) {
                         VStack(spacing: 24) {
-                            //NavigationLink(destination: DetailView()) {
+                            NavigationLink(destination: RegistrationView(registration: .constant(true))) {
                                 Text("Начать")
                                     .font(Font.bold(size: 16))
                                     .frame(width: Screen.width - 48,
@@ -37,9 +37,9 @@ struct IntroView: View {
                                     .foregroundColor(Color.black)
                                     .background(Color.white)
                                     .cornerRadius(100)
-                            //}
+                            }
 
-                            //NavigationLink(destination: DetailView()) {
+                            NavigationLink(destination: RegistrationView(registration: .constant(false))) {
                                 VStack {
                                     Text("У вас уже есть аккаунт?")
                                         .font(Font.medium(size: 14))
@@ -49,15 +49,16 @@ struct IntroView: View {
                                         .font(Font.bold(size: 14))
                                         .foregroundColor(Color.white)
                                 }
-                            //}
+                            }
 
                         }
                     }
                     .padding(.bottom, 20)
                 }
             }
-            .navigationBarHidden(true)
         }
+        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden()
     }
 }
 
