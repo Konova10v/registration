@@ -75,17 +75,37 @@ final class AuthViewModel: ObservableObject {
         saveData()
     }
     
-    func login(email: String, password: String) -> Bool {
-        var loginError: Bool = false
+    func login(email: String, password: String) -> String {
+        var loginError: String = ""
         for item in users {
-            if item.email == email && item.password == password {
-                loginError = false
+            if item.email == email {
+                if item.password == password {
+                    loginError = "Успешно"
+                } else {
+                    loginError = "Неверный пароль"
+                }
             } else {
-                loginError = true
+                loginError = "Такого email нет"
             }
         }
 
         return loginError
+    }
+    
+    func changePassword(email: String, password: String) -> String {
+        let changeUser = users.filter { user in
+            user.email == email
+         }
+        
+        changeUser.forEach { user in
+             container.viewContext.delete(user)
+         }
+        
+        saveData()
+        
+        addToDo(email: email, password: password)
+        
+        return "Пароль изменен"
     }
     
     

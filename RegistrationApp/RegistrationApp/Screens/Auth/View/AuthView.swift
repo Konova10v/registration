@@ -15,7 +15,9 @@ struct RegistrationView: View {
     @StateObject private var viewModel: AuthViewModel = AuthViewModel.instance
     @State private var isSecurePasswordEntry = true
     @State private var tapRegister: Bool = false
-    @State private var error: Bool = false
+    @State private var error: String = ""
+    @State private var changePassword: Bool = false
+    @State private var changePasswordDone: String = ""
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
@@ -24,6 +26,9 @@ struct RegistrationView: View {
         .padding(EdgeInsets(top: 25, leading: 16, bottom: 0, trailing: 16))
         .navigationBarHidden(true)
         .environmentObject(viewModel)
+        .onAppear(perform: {
+            print("test \(viewModel.formIsValid)")
+        })
         .onDisappear {
             viewModel.email = ""
             viewModel.emailLogin = ""
@@ -69,16 +74,61 @@ struct RegistrationView: View {
                 checkPasswordView
             }
             
-            if !registration && error {
-                Text("Неверный логин или пароль")
-                    .font(.custom("WorldClass-Regular", size: 14))
-                    .foregroundColor(Color.red)
+            if !registration {
+                VStack(spacing: 5) {
+                    Text(error)
+                        .font(.custom("WorldClass-Regular", size: 14))
+                        .foregroundColor(Color.red)
+                    
+                    if error == "Неверный пароль" {
+                        Button {
+                            changePassword.toggle()
+                            viewModel.password = ""
+                            error = ""
+                        } label: {
+                            Text("Хотите изменить пароль?")
+                                .font(Font.medium(size: 14))
+                                .foregroundColor(Color.init(hex: "B9B9BA"))
+                        }
+                    }
+                }
+            }
+            
+            if changePassword {
+                Text("Введите новый пароль")
+                    .font(Font.medium(size: 14))
+                    .foregroundColor(Color.init(hex: "B9B9BA"))
+            }
+            
+            if changePasswordDone == "Пароль изменен" {
+                Text("Пароль успешно изменен")
+                    .font(Font.medium(size: 14))
+                    .foregroundColor(Color.init(hex: "B9B9BA"))
             }
 
-            buttonView
-                .padding(.top, 16)
-            
-            
+            VStack {
+                if viewModel.formIsValid {
+                    buttonView
+                } else {
+                    HStack {
+                        Spacer()
+
+                        if !changePassword {
+                            Text(registration ?  "Зарегистрироваться" : "Войти")
+                                .foregroundColor(Color.white)
+                        } else {
+                            Text("Изменить пароль")
+                                .foregroundColor(Color.white)
+                        }
+
+                        Spacer()
+                    }
+                    .padding([.top, .bottom], 14)
+                    .background(Color.secondary)
+                    .cornerRadius(100)
+                }
+            }
+            .padding(.top, 16)
         }
         .padding(EdgeInsets(top: 16, leading: 24, bottom: 16, trailing: 24))
         .background(Color.white)
@@ -102,6 +152,8 @@ struct RegistrationView: View {
             ProfileView()
         } label: {
             Button {
+                error = ""
+                changePasswordDone = ""
                 loading = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3)) {
                     if registration {
@@ -110,11 +162,17 @@ struct RegistrationView: View {
                         UserDefaults.standard.set(true, forKey: "auth")
                         auth.toggle()
                     } else {
-                        error = viewModel.login(email: viewModel.emailLogin, password: viewModel.password)
-                        if !error {
-                            UserDefaults.standard.set(viewModel.emailLogin, forKey: "email")
-                            UserDefaults.standard.set(true, forKey: "auth")
-                            auth.toggle()
+                        if !changePassword {
+                            error = viewModel.login(email: viewModel.emailLogin, password: viewModel.password)
+                            if error == "Успешно" {
+                                UserDefaults.standard.set(viewModel.emailLogin, forKey: "email")
+                                UserDefaults.standard.set(true, forKey: "auth")
+                                auth.toggle()
+                            }
+                        } else {
+                            changePasswordDone = viewModel.changePassword(email: viewModel.emailLogin, password: viewModel.password)
+                            
+                            changePassword = false
                         }
                     }
                     loading = false
@@ -127,8 +185,13 @@ struct RegistrationView: View {
                         SwiftUI.ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: Color.white))
                     } else {
-                        Text(registration ?  "Зарегистрироваться" : "Войти")
-                            .foregroundColor(Color.white)
+                        if !changePassword {
+                            Text(registration ?  "Зарегистрироваться" : "Войти")
+                                .foregroundColor(Color.white)
+                        } else {
+                            Text("Изменить пароль")
+                                .foregroundColor(Color.white)
+                        }
                     }
 
                     Spacer()
@@ -137,7 +200,6 @@ struct RegistrationView: View {
                 .background(viewModel.formIsValid ? Color.black : Color.secondary)
                 .cornerRadius(100)
             }
-            .disabled(!viewModel.formIsValid)
         }
     }
 }
