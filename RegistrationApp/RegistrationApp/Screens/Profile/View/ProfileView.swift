@@ -8,10 +8,9 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @StateObject private var viewModel: AuthViewModel = AuthViewModel.instance
+    @EnvironmentObject var appState: AppState
     
     @State var loading: Bool = false
-    @State var exit: Bool = false
     
     var body: some View {
         NavigationView {
@@ -32,7 +31,6 @@ struct ProfileView: View {
                                     .multilineTextAlignment(.leading)
                                 
                                 Spacer()
-                                
                             }
                             
                             Text(UserDefaults.standard.string(forKey: "email") ?? "")
@@ -46,26 +44,8 @@ struct ProfileView: View {
                 
                 Spacer()
                 
-                
-                
-                //NavigationLink(destination: IntroView()) {
-                    Button {
-                        UserDefaults.standard.set(false, forKey: "auth")
-                        UserDefaults.standard.set("", forKey: "email")
-                    } label: {
-                        //NavigationLink(destination: IntroView()) {
-                            Text("Выйти")
-                                .font(Font.bold(size: 16))
-                                .frame(width: Screen.width - 48,
-                                       height: 48,
-                                       alignment: .center)
-                                .foregroundColor(Color.black)
-                                .background(Color.white)
-                                .cornerRadius(100)
-                                .padding(.bottom, 50)
-                        //}
-                    }
-                //}
+                exitButtonView
+                    .padding(.bottom, 50)
             }
             .background(Color.black)
             .edgesIgnoringSafeArea(.all)
@@ -76,35 +56,31 @@ struct ProfileView: View {
     
     // MARK: - Exit Button View
     var exitButtonView: some View {
-        NavigationLink(isActive: $exit) {
-            IntroView()
-        } label: {
-            Button {
-                loading = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3)) {
-                    UserDefaults.standard.set(false, forKey: "auth")
-                    UserDefaults.standard.set("", forKey: "email")
-                    loading = false
-                }
-            } label: {
-                HStack {
-                    Spacer()
-
-                    if loading {
-                        SwiftUI.ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: Color.white))
-                    } else {
-                        Text("Выйти")
-                            .foregroundColor(Color.white)
-                    }
-
-                    Spacer()
-                }
-                .padding([.top, .bottom], 14)
-                .background(viewModel.formIsValid ? Color.black : Color.secondary)
-                .cornerRadius(100)
+        Button {
+            loading = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3)) {
+                UserDefaults.standard.set(false, forKey: "auth")
+                UserDefaults.standard.set("", forKey: "email")
+                loading = false
+                appState.modelID = ScreenID.intro
             }
-            .disabled(!viewModel.formIsValid)
+        } label: {
+            HStack {
+                Spacer()
+                
+                if loading {
+                    SwiftUI.ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color.black))
+                } else {
+                    Text("Выйти")
+                        .foregroundColor(Color.black)
+                }
+                
+                Spacer()
+            }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(100)
         }
     }
 }

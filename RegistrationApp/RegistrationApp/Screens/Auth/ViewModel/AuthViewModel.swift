@@ -52,10 +52,11 @@ final class AuthViewModel: ObservableObject {
                 print("Error loading todo: \(error)")
             }
         }
-        fetchTodos()
+        fetchUsers()
     }
     
-    private func fetchTodos() {
+    
+    private func fetchUsers() {
         let request = NSFetchRequest<UserEntity>(entityName: "UserEntity")
         
         do {
@@ -64,7 +65,6 @@ final class AuthViewModel: ObservableObject {
             print("Error fetching \(error)")
         }
     }
-    
     
     func addToDo(email: String, password: String) {
         let newDoTo = UserEntity(context: container.viewContext)
@@ -112,7 +112,7 @@ final class AuthViewModel: ObservableObject {
     private func saveData() {
         do {
             try container.viewContext.save()
-            fetchTodos()
+            fetchUsers()
         } catch let error {
             print("Error saving. \(error)")
         }

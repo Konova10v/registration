@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct RegistrationView: View {
+    @EnvironmentObject var appState: AppState
+    @StateObject private var viewModel: AuthViewModel = AuthViewModel.instance
+    
     @Binding var registration: Bool
     @State var loading: Bool = false
-    @State var auth: Bool = false
-    
-    @StateObject private var viewModel: AuthViewModel = AuthViewModel.instance
     @State private var isSecurePasswordEntry = true
     @State private var tapRegister: Bool = false
     @State private var error: String = ""
@@ -33,6 +33,10 @@ struct RegistrationView: View {
             viewModel.email = ""
             viewModel.emailLogin = ""
             viewModel.password = ""
+            
+            viewModel.emailPlaceholder = "Введите электронную почту"
+            viewModel.emailAlertText = ""
+            viewModel.emailAlertShown = false
         }
     }
 
@@ -148,58 +152,55 @@ struct RegistrationView: View {
 
     // MARK: - Register Button View
     var buttonView: some View {
-        NavigationLink(isActive: $auth) {
-            ProfileView()
-        } label: {
-            Button {
-                error = ""
-                changePasswordDone = ""
-                loading = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3)) {
-                    if registration {
-                        viewModel.addToDo(email: viewModel.email, password: viewModel.password)
-                        UserDefaults.standard.set(viewModel.email, forKey: "email")
-                        UserDefaults.standard.set(true, forKey: "auth")
-                        auth.toggle()
+        Button {
+            error = ""
+            changePasswordDone = ""
+            loading = true
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3)) {
+                if registration {
+                    viewModel.addToDo(email: viewModel.email, password: viewModel.password)
+                    UserDefaults.standard.set(viewModel.email, forKey: "email")
+                    UserDefaults.standard.set(true, forKey: "auth")
+                    appState.modelID = ScreenID.profile
+                } else {
+                    if !changePassword {
+                        error = viewModel.login(email: viewModel.emailLogin, password: viewModel.password)
+                        if error == "Успешно" {
+                            UserDefaults.standard.set(viewModel.emailLogin, forKey: "email")
+                            UserDefaults.standard.set(true, forKey: "auth")
+                            appState.modelID = ScreenID.profile
+                        }
                     } else {
-                        if !changePassword {
-                            error = viewModel.login(email: viewModel.emailLogin, password: viewModel.password)
-                            if error == "Успешно" {
-                                UserDefaults.standard.set(viewModel.emailLogin, forKey: "email")
-                                UserDefaults.standard.set(true, forKey: "auth")
-                                auth.toggle()
-                            }
-                        } else {
-                            changePasswordDone = viewModel.changePassword(email: viewModel.emailLogin, password: viewModel.password)
+                        changePasswordDone = viewModel.changePassword(email: viewModel.emailLogin, password: viewModel.password)
                             
-                            changePassword = false
-                        }
+                        changePassword = false
                     }
-                    loading = false
                 }
-            } label: {
-                HStack {
-                    Spacer()
-
-                    if loading {
-                        SwiftUI.ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: Color.white))
-                    } else {
-                        if !changePassword {
-                            Text(registration ?  "Зарегистрироваться" : "Войти")
-                                .foregroundColor(Color.white)
-                        } else {
-                            Text("Изменить пароль")
-                                .foregroundColor(Color.white)
-                        }
-                    }
-
-                    Spacer()
-                }
-                .padding([.top, .bottom], 14)
-                .background(viewModel.formIsValid ? Color.black : Color.secondary)
-                .cornerRadius(100)
+                loading = false
             }
+        } label: {
+            HStack {
+                Spacer()
+
+                if loading {
+                    SwiftUI.ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color.white))
+                } else {
+                    if !changePassword {
+                        Text(registration ?  "Зарегистрироваться" : "Войти")
+                            .foregroundColor(Color.white)
+                    } else {
+                        Text("Изменить пароль")
+                            .foregroundColor(Color.white)
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding([.top, .bottom], 14)
+            .background(viewModel.formIsValid ? Color.black : Color.secondary)
+            .cornerRadius(100)
         }
     }
 }
@@ -219,7 +220,7 @@ private extension RegistrationView {
                     .frame(width: 16, height: 16)
 
                 Text(text)
-                    .font(.custom("WorldClass-Regular", size: 14))
+                    .font(Font.medium(size: 14))
                     .foregroundColor(isDone ? Color.black : Color.secondary)
 
                 Spacer()
